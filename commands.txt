@@ -1,0 +1,8 @@
+-- check .env vars
+docker exec -it base-app-api sh
+echo $POSTGRES_HOST
+
+-- check data in db
+docker exec -it base-app-db psql -U user -d mydatabase
+SELECT * FROM posts;
+
