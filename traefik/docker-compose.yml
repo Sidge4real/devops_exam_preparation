@@ -1,0 +1,65 @@
+# services:
+#   traefik:
+#     image: "traefik:3.3"
+#     ports:
+#       - "443:443"
+#       - "80:80"
+#       # geen poort 8080
+#     volumes:
+#       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+#       - "./etc/traefik/traefik.yml:/etc/traefik/traefik.yml"
+#       # opslaan gekende hosts voor https | voorkomen van verliezen van dit bij restart
+#       # chmod 600 acme.json --> voor de rechten van dit bestand (aanpassing) / is uitgevoerd
+#       - "./acme.json:/acme.json"
+#     container_name: traefik
+#     # networks:
+#     #   - blog-app
+#     env_file:
+#       - .env
+#     labels:
+#       - "traefik.http.middlewares.dashboard-auth.basicauth.users=student:$2y$05$Jx9W5PoN55LlZ708kojnu./zqJo97VzMPmN6Yrj5u1Zs6dUcf4jCa"
+#       - "traefik.http.routers.traefik.middlewares=dashboard-auth"
+#       - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+#       - "traefik.http.routers.traefik.service=api@internal"
+#       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+#       - "traefik.http.services.traefik.loadbalancer.server.port=8080" # we exposen via treafik ipv direct via de poort
+
+# networks:
+#   default:
+#     name: traefik
+#   # blog-app:
+#   #   external: true
+
+# # TODO:
+# # Je traefik dashboard moet beveiligd zijn met volgende credentials:
+# # User: student
+# # Pass: DitIsGoed
+
+
+
+services:
+  traefik:
+    image: "traefik:3.3"
+    container_name: traefik
+    ports:
+      - "80:80"
+      # - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./etc/traefik/traefik.yml:/etc/traefik/traefik.yml"
+      # - "./acme.json:/acme.json"
+    env_file:
+      - .env
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      # - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=student:$$2y$$05$$Jx9W5PoN55LlZ708kojnu./zqJo97VzMPmN6Yrj5u1Zs6dUcf4jCa"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.removeheader=true"
+      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+
+networks:
+  default:
+    name: traefik
