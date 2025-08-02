@@ -1,0 +1,65 @@
+services:
+  admin:
+    networks:
+      - traefik
+    build:
+      context: admin
+    container_name: base-app-admin
+    labels:
+      - "traefik.http.routers.admin.rule=Host(`base-app.localhost`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.admin.entrypoints=web"
+      - "traefik.http.services.admin.loadbalancer.server.port=80"
+
+  api:
+    networks:
+      - traefik
+    # ports:
+    #   - 3000:3000
+    build:
+      context: api
+    container_name: base-app-api
+    # environment:
+    #   - POSTGRES_HOST=db
+    #   - POSTGRES_USER=user
+    #   - POSTGRES_PASSWORD=userpassword
+    #   - POSTGRES_DB=mydatabase
+    env_file:
+      - .env
+    labels:
+      - "traefik.http.routers.api.rule=Host(`base-app.localhost`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+      - "traefik.http.routers.api.middlewares=strip-api-prefix"
+
+  frontend:
+    networks:
+      - traefik
+    build:
+      context: frontend
+    container_name: base-app-frontend
+    env_file:
+      - .env
+    ports:
+    - 3000:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`base-app.localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+
+  db:
+    image: postgres:15.10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    container_name: base-app-db
+    networks:
+      - traefik
+
+volumes:
+  db-data:
+  
+networks:
+  traefik:
+    external: true
